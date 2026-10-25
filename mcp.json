@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "process-memory": {
+      "command": "sudo",
+      "args": [
+        "-n",
+        "env",
+        "PROCMEM_SRC=/mnt/MEMPROCFS/liveram-native.raw",
+        "python3",
+        "-I",
+        "/home/USER/.local/share/process-memory/server.py"
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+# allowlist.toml — server-side only. NEVER exposed through MCP.
+#
+# processes : which images clients may see. Everything else is invisible —
+#             indistinguishable from "not running" (same error 87).
+#             Written by panel.py from your selection.
+#
+# The walk's bootstrap values (kernel DTB + anchor address) are discovered
+# automatically from memory at startup and re-derived after every host
+# reboot — nothing needs to be recorded here. Derived values are cached in
+# config/bootstrap.json (auto-managed; safe to delete). To pin them by hand
+# for debugging, add:
+#
+# [target]
+# kernel_dtb = 0x1ae000
+# anchor_eproc = 0xffffe787af6c9040
+
+version = 1
+
+[allowlist]
+processes = [
+    "D2R.exe"
+]
