@@ -286,6 +286,10 @@ class Panel:
                              font=("monospace", 11), yscrollcommand=sb.set)
         self.lb.pack(side="left", fill="both", expand=True)
         sb.config(command=self.lb.yview)
+        # open pre-filtered to whatever is currently exposed (e.g. d2r.exe)
+        _allowed = _read_cfg().get("allowlist", {}).get("processes", [])
+        if _allowed:
+            self.filter_var.set(_allowed[0].lower())
 
         # allowlist row
         bottom = tk.Frame(root)
