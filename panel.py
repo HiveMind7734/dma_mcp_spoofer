@@ -234,6 +234,7 @@ class Panel:
     def __init__(self, root):
         self.root = root
         self.procs: list[dict] = []
+        self.view: list[dict] = []      # procs after the keyword filter
         self.q: queue.Queue = queue.Queue()
         self.log_lines: collections.deque = collections.deque(maxlen=400)
         self.mount_proc: subprocess.Popen | None = None
@@ -264,7 +265,19 @@ class Panel:
                                     command=self.start_scan)
         self.btn_rescan.pack(side="left")
 
-        # process list
+        # process list + live keyword filter
+        filterbar = tk.Frame(root)
+        filterbar.pack(fill="x", padx=12, pady=(6, 0))
+        tk.Label(filterbar, text="Filter:").pack(side="left")
+        self.filter_var = tk.StringVar()
+        self.filter_var.trace_add("write", lambda *_: self.render_procs())
+        self.filter_entry = tk.Entry(filterbar, textvariable=self.filter_var)
+        self.filter_entry.pack(side="left", fill="x", expand=True, padx=6)
+        self.filter_entry.bind("<Escape>",
+                               lambda _e: self.filter_var.set(""))
+        self.filter_count = tk.Label(filterbar, text="", fg="#555")
+        self.filter_count.pack(side="left")
+
         frame = tk.Frame(root)
         frame.pack(fill="both", expand=True, padx=12)
         sb = tk.Scrollbar(frame)
@@ -311,6 +324,23 @@ class Panel:
         names = _read_cfg().get("allowlist", {}).get("processes", [])
         self.allowed.config(text=", ".join(names) if names else "(nothing)")
 
+    def render_procs(self):
+        """Fill the listbox from the last scan, applying the keyword
+        filter (case-insensitive substring of name or pid)."""
+        q = self.filter_var.get().strip().lower()
+        self.view = [p for p in self.procs if not q or q in p["name"].lower()
+                     or (p["pid"] is not None and q in str(p["pid"]))]
+        self.lb.delete(0, "end")
+        for p in self.view:
+            pid = "-" if p["pid"] is None else p["pid"]
+            self.lb.insert(
+                "end", f"{pid:>7}  {p['name']:<24} dtb 0x{p['dtb']:X}")
+        if q:
+            self.filter_count.config(text=f"{len(self.view)} of "
+                                          f"{len(self.procs)}")
+        else:
+            self.filter_count.config(text="")
+
     # ── link control ───────────────────────────────────────────────────────
     def start_link(self):
         try:
@@ -353,7 +383,7 @@ class Panel:
         sel = self.lb.curselection()
         if not sel:
             return
-        names = sorted({self.procs[i]["name"] for i in sel})
+        names = sorted({self.view[i]["name"] for i in sel})
         paths = write_allowlist(names)
         self.refresh_allowed_label()
         self.msg.config(text=f"allowlist -> {', '.join(names)} "
@@ -369,11 +399,7 @@ class Panel:
                 elif kind == "procs":
                     self.scanning = False
                     self.procs = item
-                    self.lb.delete(0, "end")
-                    for p in self.procs:
-                        pid = "-" if p["pid"] is None else p["pid"]
-                        self.lb.insert(
-                            "end", f"{pid:>7}  {p['name']:<24} dtb 0x{p['dtb']:X}")
+                    self.render_procs()
                     self.msg.config(text=f"{len(self.procs)} processes "
                                           f"(full list — your view)")
                 elif kind == "err":

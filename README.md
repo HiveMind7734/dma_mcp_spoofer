@@ -38,7 +38,7 @@ sudo python3 -I selftest.py --live                    # -> MZ ... OK
 # 4) control panel: link status, full process list, pick what to expose
 sudo -E python3 panel.py            # GUI
 sudo python3 panel.py --list        # CLI: walk + auto-bootstrap
-sudo python3 panel.py --expose D2R.exe
+sudo python3 panel.py --expose D2R.exe   # GUI has a live keyword filter too
 
 # 5) publish the client-facing server copy + register with a client
 python3 -I install.py
